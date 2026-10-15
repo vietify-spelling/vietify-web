@@ -56,6 +56,7 @@
 
       <div class="actions">
         <button id="convert" type="button" class="btn primary"><span data-i18n="convert"></span> <kbd data-i18n="convert_hint"></kbd></button>
+        <button id="interleave-open" type="button" class="btn" hidden data-i18n="interleave"></button>
         <p id="status" class="status" role="status" aria-live="polite"></p>
       </div>
     </section>
@@ -68,6 +69,14 @@
     <p data-i18n="about"></p>
     <p><span data-i18n="credits"></span> <a href="NOTICE.txt" data-i18n="source"></a></p>
   </footer>
+
+  <div id="interleave" class="overlay" role="dialog" aria-modal="true" aria-labelledby="interleave-title" hidden>
+    <div class="overlay-bar">
+      <h2 id="interleave-title" data-i18n="interleave"></h2>
+      <button id="interleave-quit" type="button" class="btn primary" data-i18n="quit"></button>
+    </div>
+    <div id="interleave-body" class="overlay-body" tabindex="-1"></div>
+  </div>
 
   <script type="module" src="js/ui/app.js"></script>
 </body>

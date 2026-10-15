@@ -62,6 +62,11 @@ function normalizePronunciation(pronunciation, language) {
 
 function convertPronunciation(pronunciation, language, mode, warnings) {
   if (language === "ja") return hepburnToVie(pronunciation, mode).vie;
+  return convertWords(pronunciation, language, mode, warnings).join(" ");
+}
+
+/** Like convertPronunciation but one entry per input word (not for "ja"). */
+function convertWords(pronunciation, language, mode, warnings) {
 
   let words = [];
   for (const word of pronunciation.split(/\s+/).filter(Boolean)) {
@@ -99,7 +104,7 @@ function convertPronunciation(pronunciation, language, mode, warnings) {
   }
 
   if (language === "fr") words = applyFrenchLiaison(words);
-  return words.map((w) => w.vie).join(" ");
+  return words.map((w) => w.vie);
 }
 
 /** Convert one text. mode: "weak" | "strong" | "ipa". Returns { output, warnings }. */
@@ -109,6 +114,31 @@ export function textToVietify(text, language, mode, engine) {
   if (mode === "ipa") return { output: pronunciation, warnings };
   const normalized = normalizePronunciation(pronunciation, language);
   return { output: convertPronunciation(normalized, language, mode, warnings), warnings };
+}
+
+/**
+ * Like textToVietifyAll, plus per-word arrays for aligning the four lines.
+ * ipaWords/weakWords/strongWords all have one entry per eSpeak word; they are
+ * null when that 1:1 relationship does not hold.
+ */
+export function textToVietifyWords(text, language, engine) {
+  const warnings = [];
+  const ipa = phonemizeText(text, language, engine, warnings);
+  const normalized = normalizePronunciation(ipa, language);
+  const ipaWords = ipa.split(/\s+/).filter(Boolean);
+  let weakWords, strongWords;
+  if (language === "ja") {
+    weakWords = convertPronunciation(normalized, language, "weak", warnings).split(/\s+/).filter(Boolean);
+    strongWords = convertPronunciation(normalized, language, "strong", warnings).split(/\s+/).filter(Boolean);
+  } else {
+    weakWords = convertWords(normalized, language, "weak", warnings);
+    strongWords = convertWords(normalized, language, "strong", warnings);
+  }
+  const aligned = weakWords.length === ipaWords.length && strongWords.length === ipaWords.length;
+  return {
+    ipa, ipaWords, weakWords, strongWords, warnings, aligned,
+    strong: strongWords.join(" "), weak: weakWords.join(" "),
+  };
 }
 
 /** IPA, strong and weak for one text, phonemizing once. */

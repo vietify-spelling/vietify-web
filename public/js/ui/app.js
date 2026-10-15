@@ -1,5 +1,6 @@
 import { loadEspeak, VOICES } from "../espeak.js";
 import { LANGUAGES, PHONEMIZED_LANGUAGES, formatBatch, processLines, textToVietify, textToVietifyAll } from "../pipeline.js";
+import { interleaveRows } from "../interleave.js";
 import { DEFAULT_UI_LANGUAGE, LANGUAGE_NAMES, MODES, UI_LANGUAGES, translate } from "../i18n.js";
 
 const $ = (id) => document.getElementById(id);
@@ -7,7 +8,7 @@ const els = {
   text: $("text"), language: $("language"), modes: $("modes"), convert: $("convert"),
   status: $("status"), results: $("results"), notes: $("notes"), speak: $("speak"),
   speakLabel: $("speak-label"), file: $("file"), browse: $("browse"), clear: $("clear"),
-  fileLabel: $("file-label"), drop: $("drop"), uiLanguage: $("ui-language"),
+  fileLabel: $("file-label"), ilOpen: $("interleave-open"), ilQuit: $("interleave-quit"), il: $("interleave"), ilBody: $("interleave-body"), drop: $("drop"), uiLanguage: $("ui-language"),
 };
 
 const store = {
@@ -25,6 +26,7 @@ const state = {
   statusValues: {},
   statusIsError: false,
   lastBatch: null,
+  lastSource: null, // { text, language } of the last successful conversion
   audio: null, // { ctx, source }
 };
 
@@ -77,6 +79,7 @@ function renderStaticText() {
   applyFileModeUi();
   updateSpeakButton();
   if (state.statusKey) setStatus(state.statusKey, state.statusValues, state.statusIsError);
+  if (!els.il.hidden && state.lastSource) renderInterleave();
   if (state.lastBatch) renderBatch(state.lastBatch);
   else if (state.lastSingle) renderSingle(state.lastSingle);
 }
@@ -218,6 +221,8 @@ async function convert() {
       const entries = processLines(source, language, state.engine);
       const failed = entries.filter((e) => e.errors.length).length;
       renderBatch({ name: state.file.name, entries, output: formatBatch(entries) });
+      state.lastSource = { text: source, language };
+      els.ilOpen.hidden = false;
       setStatus(failed ? "lines_failed" : "lines_done", { count: failed || entries.length }, failed > 0);
     } else {
       const mode = currentMode();
@@ -232,6 +237,8 @@ async function convert() {
         warnings = one.warnings;
       }
       renderSingle({ rows, warnings });
+      state.lastSource = { text: source, language };
+      els.ilOpen.hidden = false;
       setStatus("done");
     }
   } catch (error) {
@@ -241,6 +248,78 @@ async function convert() {
     els.convert.disabled = false;
   }
 }
+
+// ---- sentence-by-sentence comparison ---------------------------------------
+let ilOpener = null;
+function renderInterleave() {
+  const { text, language } = state.lastSource;
+  const rows = interleaveRows(text, language, state.engine);
+  const lineEl = (cls, tokens) => {
+    const row = document.createElement("div");
+    row.className = "line";
+    const text = document.createElement("span");
+    text.className = "text";
+    tokens.forEach(({ text: word, group }, i) => {
+      if (i) text.append(" ");
+      const w = document.createElement("span");
+      w.className = "w";
+      if (group !== null) w.dataset.g = group;
+      w.textContent = word;
+      text.append(w);
+    });
+    row.append(Object.assign(document.createElement("span"), { className: `tag ${cls}`, textContent: t(`tag_${cls}`) }), text);
+    return row;
+  };
+  els.ilBody.replaceChildren(...rows.map((r) => {
+    const pair = document.createElement("div");
+    pair.className = "pair";
+    if (r.error) {
+      pair.append(lineEl("src", [{ text: r.original, group: null }]));
+      pair.append(Object.assign(document.createElement("div"), { className: "err", textContent: r.error }));
+    } else {
+      pair.append(lineEl("src", r.src), lineEl("ipa", r.ipa), lineEl("weak", r.weak), lineEl("strong", r.strong));
+    }
+    return pair;
+  }));
+}
+function openInterleave() {
+  if (!state.lastSource) return;
+  ilOpener = document.activeElement;
+  renderInterleave();
+  els.il.hidden = false;
+  document.body.classList.add("noscroll");
+  els.ilBody.scrollTop = 0;
+  els.ilQuit.focus();
+}
+function closeInterleave() {
+  els.il.hidden = true;
+  document.body.classList.remove("noscroll");
+  ilOpener?.focus?.();
+}
+// Selecting words in any line highlights the corresponding words in all lines of that sentence.
+function syncSelection() {
+  els.ilBody.querySelectorAll(".w.hl").forEach((w) => w.classList.remove("hl"));
+  const sel = getSelection();
+  if (els.il.hidden || !sel.rangeCount || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  const probe = document.createRange();
+  for (const pair of els.ilBody.querySelectorAll(".pair")) {
+    const words = [...pair.querySelectorAll(".w[data-g]")];
+    const groups = new Set();
+    for (const w of words) {
+      probe.selectNodeContents(w);
+      // strict overlap: selection ends after the word starts and starts before it ends
+      if (range.compareBoundaryPoints(Range.START_TO_END, probe) > 0 && range.compareBoundaryPoints(Range.END_TO_START, probe) < 0) {
+        groups.add(w.dataset.g);
+      }
+    }
+    if (groups.size) words.forEach((w) => w.classList.toggle("hl", groups.has(w.dataset.g)));
+  }
+}
+document.addEventListener("selectionchange", syncSelection);
+els.ilOpen.addEventListener("click", openInterleave);
+els.ilQuit.addEventListener("click", closeInterleave);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !els.il.hidden) closeInterleave(); });
 
 // ---- files ---------------------------------------------------------------
 async function loadFile(file) {

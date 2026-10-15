@@ -24,6 +24,12 @@ export const LANGUAGE_NAMES = {
 
 export const STRINGS = {
   en: {
+    interleave: "Compare sentence by sentence",
+    quit: "Quit",
+    tag_src: "Original",
+    tag_ipa: "IPA",
+    tag_weak: "Weak",
+    tag_strong: "Strong",
     tagline: "Give foreign pronunciation a Vietnamese-style spelling.",
     text_heading: "Text to convert",
     text_placeholder: "Type or paste text…",
@@ -70,7 +76,13 @@ export const STRINGS = {
     interface_language: "Interface language",
   },
   vi: {
-    tagline: "Phiên âm tiếng nước ngoài theo cách đánh vần tiếng Việt.",
+    interleave: "So sánh từng câu",
+    quit: "Thoát",
+    tag_src: "Gốc",
+    tag_ipa: "IPA",
+    tag_weak: "Sát",
+    tag_strong: "Mạnh",
+    tagline: "Việt hóa phiên âm ngoại ngữ",
     text_heading: "Văn bản cần chuyển đổi",
     text_placeholder: "Nhập hoặc dán văn bản…",
     drop_hint: "Thả tệp văn bản vào đây, hoặc bấm Chọn tệp",
@@ -109,7 +121,7 @@ export const STRINGS = {
     line: "Dòng {n}",
     file_too_large: "Tệp khá lớn ({mb} MB); việc chuyển đổi có thể mất thời gian.",
     file_read_failed: "Không đọc được tệp này dưới dạng văn bản UTF-8.",
-    about: "Chạy hoàn toàn trong trình duyệt — không có gì bạn nhập bị gửi đi.",
+    about: "Chạy hoàn toàn trên trình duyệt — không có gì bạn nhập bị gửi đi.",
     credits:
       "Dựa trên vuadu/ipa-to-vie (MIT). Phát âm bởi eSpeak NG biên dịch sang WebAssembly. Giấy phép GPL-3.0-or-later.",
     source: "Mã nguồn & ghi chú",

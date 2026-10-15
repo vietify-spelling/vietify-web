@@ -40,3 +40,19 @@ test("word alignment: same count, split (numbers), and punctuation", async () =>
   const d = alignSentence("san mai", "ja", engine);
   assert.ok(d.aligned);
 });
+
+test("alignment: long French sentence with liaison and elisions stays word-for-word", async () => {
+  const engine = await getEngine();
+  const { alignSentence } = await import("../public/js/align.js");
+  const a = alignSentence(
+    "Vous avez un excellent ami, et nous allons aux anciens hôtels où ils ont onze enfants heureux.",
+    "fr",
+    engine,
+  );
+  assert.ok(a.aligned && !a.coarse);
+  assert.equal(a.src.length, 17);
+  const identity = a.src.map((_, i) => i);
+  for (const line of [a.src, a.ipa, a.weak, a.strong]) assert.deepEqual(line.map((t) => t.group), identity);
+  assert.equal(a.ipa[0].text, "vuz");
+  assert.equal(a.ipa[16].text, "øʁø.");
+});

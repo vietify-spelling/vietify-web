@@ -1,55 +1,126 @@
-# Vietify (web)
+<div align="center">
 
-**Give foreign pronunciation a Vietnamese-style spelling — in your browser.**
+# 🇻🇳 Vietify-web
 
-A static-site port of [Vietify](../vietify). English (UK/US), French, German,
-Russian, Mandarin (pinyin), Japanese (Hepburn) and raw IPA, with weak / strong /
-IPA output, file batch mode, speech, and a Vietnamese / English interface.
-Everything runs client-side; eSpeak NG is compiled to WebAssembly.
+**Give foreign pronunciation a Vietnamese-style spelling.**
 
-## Use
+[![Try the web app](https://img.shields.io/badge/▶%20Try%20the%20web%20app-b8332a?style=for-the-badge)](https://vietify-spelling.github.io/vietify-web/)
+[![Runs offline-ready](https://img.shields.io/badge/runs-in%20your%20browser-2d8a4e?style=flat-square)](https://vietify-spelling.github.io/vietify-web/)
+[![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
 
-Serve `public/` from any static host (the `.wasm` file must be served as
-`application/wasm`; the pages must be served over http(s), not opened as `file://`).
+</div>
 
-```sh
-npm run serve        # http://localhost:8080
+---
+
+## 🌐 Web app — no install needed
+
+> **👉 [Open the web app](https://vietify-spelling.github.io/vietify-web/)**
+>
+> Type or paste text (or drop a `.txt` file), pick a language, and get the Vietnamese-style spelling. Works on phone and desktop. Nothing is uploaded: everything runs locally in your browser.
+
+Supports **English (UK/US), French, German, Russian, Mandarin (pinyin), Japanese (Hepburn)** and raw **IPA** input. The interface is in **Tiếng Việt** or **English**.
+
+---
+
+## 💡 Why this exists
+
+Vietnamese learners of a foreign language often struggle with unfamiliar sounds. Vietify doesn't translate meaning — it shows how a word *sounds*, spelled the way a Vietnamese speaker would read it:
+
+```text
+Bonjour tout le monde   ──▶   bông-ʒuʁ tul-môngd
 ```
 
-## Layout
+Under the hood, [eSpeak NG](https://github.com/espeak-ng/espeak-ng) (compiled to WebAssembly) turns text into IPA, then a rule table maps IPA to Vietnamese spelling.
 
-| Path | What |
+This is the browser version of the Python tool Vietify (itself based on [ipa-to-vie](https://github.com/vuadu/ipa-to-vie)), with the same output.
+
+---
+
+## 🚀 Usage
+![example_webpage](example_webpage.png)
+
+### 1. Enter your text
+
+Type or paste text, or drop / browse a UTF-8 `.txt` file. Mandarin takes **pinyin** (`ni3 hao3`), Japanese takes **Hepburn romaji** (`konnichiwa`), not hanzi or kana.
+
+### 2. Pick a language and mode
+
+| Mode | What it does |
 | --- | --- |
-| `public/` | The deployable site (HTML, CSS, JS, WASM) |
-| `public/js/core/` | Parsers + converters ported from Python (`converter`, IPA/pinyin/Hepburn parsers) |
-| `public/js/phonemize.js` | What `phonemizer` did around eSpeak: punctuation hiding, output tidy-up |
-| `public/js/pipeline.js` | Port of `main.py`: phonemize → normalise → convert |
-| `public/espeak/` | eSpeak NG 1.51 WASM build + trimmed data (≈ 5 MB, compresses to ≈ 2 MB) |
-| `wasm/` | Build script and C glue for the WASM engine |
-| `tools/` | Generate rule tables and the Python golden corpus |
-| `test/` | Parity tests against the Python implementation |
+| 😊 **Default** | Shows all three results below. |
+| 🤓 **Weak** (*Sát*) | Keeps foreign sounds as they are. |
+| 🤪 **Strong** (*Việt hóa mạnh*) | Replaces sounds Vietnamese lacks with close Vietnamese ones. |
+| 💯 **IPA** | The IPA pronunciation only. |
 
-## Develop
+A loaded **file** is converted line by line (IPA, strong and weak for every line) and can be downloaded as a `.txt`.
 
-```sh
-npm test                 # replays test/golden.json (419 Python results) through the JS code
-npm run export:rules     # regenerate rule/grammar tables from ../vietify
-npm run export:golden    # regenerate test/golden.json from ../vietify (needs its .venv)
-npm run build:wasm       # rebuild public/espeak (needs emsdk download, autotools, espeak-ng 1.51 data)
+### 3. Convert, listen, compare
+
+- **Convert** (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) shows the result. 🔊 **Speak** reads the input aloud.
+- **So sánh từng câu** (*Compare sentence by sentence*) opens a full-screen view, one block per sentence:
+
+```text
+ GỐC    Bonjour tout le monde.
+ IPA    bɔ̃ʒuʁ tulmɔ̃d.
+ SÁT    bông-ʒuʁ tul-môngd.
+ MẠNH   bông-giuc tu-mông-đơ.
 ```
 
-No runtime or build dependencies besides Node ≥ 22 for the tests. See
-[PORTING.md](PORTING.md) for the compatibility matrix, design decisions and
-known differences.
+  **Select words** in any line and the matching words light up in all four lines — even when eSpeak fuses several words into one. <kbd>Esc</kbd> or **Thoát** returns to the converter.
 
-## Deploy
+---
 
-Copy `public/` to any static host (GitHub Pages, Netlify, S3, nginx…). Paths
-are relative, so a sub-path deployment works. Enable gzip/brotli for
-`.wasm`, `.data` and `.js` to cut the download to ≈ 2 MB.
+## 🧭 How it works
 
-## License
+```text
+          ┌────────────┐   ┌──────────────┐   ┌────────────────┐
+ text ───▶│ eSpeak NG  │──▶│ normalise    │──▶│ parse + rules  │──▶ weak / strong
+          │ (WASM, IPA)│   │ IPA quirks   │   │ per syllable   │
+          └────────────┘   └──────────────┘   └────────────────┘
+```
 
-GPL-3.0-or-later (it bundles eSpeak NG and ports GPL Vietify). Based on
-[ipa-to-vie](https://github.com/vuadu/ipa-to-vie) (MIT) by Rezza Inc.
-See `public/NOTICE.txt`.
+Everything is plain static files: no server, no build step, no framework. The Python pipeline was ported function by function, and a test suite replays **400+ results from the Python version** and requires identical output.
+
+---
+
+## 🗂 Project layout
+
+| Path | Purpose |
+| --- | --- |
+| `public/` | The deployable site (HTML, CSS, JS, WASM). |
+| `public/js/core/` | Parsers and converters ported from Python. |
+| `public/js/phonemize.js`, `pipeline.js` | The `phonemizer` replacement and the text → Vietnamese pipeline. |
+| `public/js/align.js`, `interleave.js` | Sentence splitting and word alignment for the comparison view. |
+| `public/espeak/` | eSpeak NG 1.51 as WebAssembly, with English/French/German/Russian/Mandarin/Japanese data (≈ 2.4 MB gzipped). |
+| `wasm/` | Build script and C glue for the WebAssembly engine. |
+| `tools/` | Generate rule tables and the Python reference corpus. |
+| `test/` | Parity and alignment tests. |
+| `PORTING.md` | Design notes and known differences from the Python version. |
+
+### Run locally
+
+```sh
+npm run serve        # http://localhost:8080  (needs http, not file://)
+npm test             # Node ≥ 22, no dependencies
+npm run build:wasm   # rebuild the eSpeak engine (emsdk, autotools, espeak-ng 1.51 data)
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug fixes and new ideas are welcome. Open an issue or a pull request.
+
+---
+
+## 📜 License
+
+**GPL-3.0-or-later** (the app bundles eSpeak NG and ports Vietify, both GPL). Based on [ipa-to-vie](https://github.com/vuadu/ipa-to-vie) by Rezza Inc. (MIT). See [`public/NOTICE.txt`](public/NOTICE.txt).
+
+---
+
+<div align="center">
+
+*Made for people who learn languages by ear — and by eye.* 🎧
+
+</div>

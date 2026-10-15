@@ -1,0 +1,21 @@
+Vietify (web) — licenses and sources
+====================================
+
+Vietify web is free software under the GNU General Public License, version 3
+or (at your option) any later version. See LICENSE in the source repository.
+
+Corresponding source: the repository containing this site. The WebAssembly
+engine in espeak/ is built from unmodified eSpeak NG 1.51
+(https://github.com/espeak-ng/espeak-ng, tag 1.51, GPL-3.0-or-later) with
+the script wasm/build.sh and the C glue wasm/vietify_espeak.c. espeak/espeak.data
+is a subset of the eSpeak NG 1.51 data (phoneme tables, dictionaries and voices
+for English, French, German, Russian, Mandarin and Japanese).
+
+Vietify's conversion rules and parsers are a port of the Python "vietify"
+project, itself based on ipa-to-vie by Rezza Inc.
+(https://github.com/vuadu/ipa-to-vie, MIT License).
+The ipa-to-vie MIT copyright notice and permission text must accompany copies
+of substantial portions of that code; see THIRD_PARTY.md in the Python vietify
+repository (the notice is still a placeholder there and needs filling in).
+
+Emscripten (MIT/UIUC) generated the loader espeak/espeak.js.

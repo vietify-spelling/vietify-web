@@ -1,43 +1,15 @@
 {
-  "name": "@vuadu/ipa-to-vie",
-  "version": "0.2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vuadu/ipa-to-vie.git"
-  },
-  "description": "Transcribe English IPA to Vietnamese Phonetic",
-  "author": "Rezza Inc.",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "/dist"
-  ],
+  "name": "vietify-web",
+  "version": "0.1.0",
+  "description": "Vietify as a static web app: give foreign pronunciation a Vietnamese-style spelling, fully in the browser.",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-or-later",
   "scripts": {
-    "gen:parser": "peggy --plugin ./node_modules/ts-pegjs/dist/tspegjs -o src/parser.generated.ts --cache src/api.pegjs",
-    "prepare": "yarn gen:parser",
-    "test": "jest",
-    "build": "tsc",
-    "prepublishOnly": "yarn build"
-  },
-  "pre-commit": [
-    "test"
-  ],
-  "devDependencies": {
-    "@types/lodash": "^4.17.7",
-    "jest": "^29.7.0",
-    "lodash": "^4.17.21",
-    "peggy": "^3.0.2",
-    "pre-commit": "^1.2.2",
-    "ts-jest": "^29.1.2",
-    "ts-pegjs": "^4.2.1",
-    "typescript": "^5.4.3"
-  },
-  "keywords": [
-    "phonetics",
-    "typescript",
-    "ipa",
-    "vietnam",
-    "english"
-  ]
+    "test": "node --test \"test/*.test.js\"",
+    "serve": "python3 -m http.server 8080 --directory public",
+    "build:wasm": "wasm/build.sh",
+    "export:rules": "python3 tools/export_rules.py",
+    "export:golden": "python3 tools/make_golden.py"
+  }
 }
